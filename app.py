@@ -3,8 +3,6 @@ from flask import Flask, json, jsonify, request
 
 app = Flask(__name__)
 
-Cardapio = {}
-
 Finalizadas = []
 
 Comandas = []
@@ -28,9 +26,9 @@ Porcoes = {}
 Escondidinhos = {}
 Caldos = {}
 
-Cardapio2 = {"Lanches": Lanches, "Salgados": Salgados, "Escondidinhos": Escondidinhos, "Caldos": Caldos, "Tapiocas": Tapiocas, "Bebidas": Bebidas, "Porcoes": Porcoes}
+Cardapio = {"Lanches": Lanches, "Salgados": Salgados, "Escondidinhos": Escondidinhos, "Caldos": Caldos, "Tapiocas": Tapiocas, "Bebidas": Bebidas, "Porcoes": Porcoes}
 
-Geral = [{"Cardapio": Cardapio2}, Comandas]
+Geral = [{"Cardapio": Cardapio}, Comandas]
 
 con = mysql.connector.connect(host = 'us-cdbr-east-04.cleardb.com', database = 'heroku_b200452de328eaa', user = 'b29ac0776cb380', password = '68cf88e1')
 
