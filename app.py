@@ -146,5 +146,3 @@ def ColocaNoCardapio():
 def TiraDoCardapio(Item):
     del Cardapio[Item]
     return (Cardapio)
-
-app.run()
