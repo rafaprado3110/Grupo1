@@ -1,66 +1,21 @@
-import re, mysql.connector
+import re
 from flask import Flask, json, jsonify, request
 
 app = Flask(__name__)
+
+Cardapio = {
+        "Refrigerante" : 5.50,
+        "Hamburguer" : 12.75,
+        "Carne Louca": 13,
+        "Caldo": 10
+}
 
 Finalizadas = []
 
 Comandas = []
 
-
-Empadas = {}
-Tortas = {}
-Sanduiche = {}
-HotDog = {}
-TSalgadas = {}
-TDoces = {}
-BAlcool = {}
-BSemAlcool = {}
-SucosDetox = {}
-
-Lanches = {"Sanduiches": Sanduiche, "Hot-Dog": HotDog}
-Salgados = {"Empadas": Empadas, "Tortas": Tortas}
-Tapiocas = {"Salgadas": TSalgadas, "Doces": TDoces}
-Bebidas = {"Alcoolico": BAlcool, "Nao-alcoolico": BSemAlcool, "Sucos-Detox": SucosDetox}
-Porcoes = {}
-Escondidinhos = {}
-Caldos = {}
-
-Cardapio = {"Lanches": Lanches, "Salgados": Salgados, "Escondidinhos": Escondidinhos, "Caldos": Caldos, "Tapiocas": Tapiocas, "Bebidas": Bebidas, "Porcoes": Porcoes}
-
 Geral = [{"Cardapio": Cardapio}, Comandas]
 
-con = mysql.connector.connect(host = 'us-cdbr-east-04.cleardb.com', database = 'heroku_b200452de328eaa', user = 'b29ac0776cb380', password = '68cf88e1')
-
-cursor = con.cursor()
-cursor.execute("select * from cardapio;")
-linhas = cursor.fetchall()
-print(linhas)
-for linha in linhas:
-    if linha[4] == "empadas":
-        Empadas[linha[1]] = linha[2]
-    elif linha[4] == "tortas":
-        Tortas[linha[1]] = linha[2]
-    elif linha[4] == "hot-dogs":
-        HotDog[linha[1]] = linha[2]
-    elif linha[4] == "sanduiches":
-        Sanduiche[linha[1]] = linha[2]
-    elif linha[4] == "escondidinhos":
-        Escondidinhos[linha[1]] = linha[2]
-    elif linha[4] == "caldos":
-        Caldos[linha[1]] = linha[2]
-    elif linha[4] == "salgadas":
-        TSalgadas[linha[1]] = linha[2]
-    elif linha[4] == "doces":
-        TDoces[linha[1]] = linha[2]
-    elif linha[4] == "alcoólicas":
-        BAlcool[linha[1]] = linha[2]
-    elif linha[4] == "não-alcoólicas":
-        BSemAlcool[linha[1]] = linha[2]
-    elif linha[4] == "sucos detox":
-        SucosDetox[linha[1]] = linha[2]
-    elif linha[4] == "porções":
-        Porcoes[linha[1]] = linha[2]
 
 @app.route('/', methods =['GET'])
 def raiz():
