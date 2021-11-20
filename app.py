@@ -86,7 +86,7 @@ def PedidoFeito():
 
     Comandas.append(data)
     
-    return jsonify(Geral)
+    return jsonify(Comandas)
 
 @app.route('/LimparComanda/<string:Ncomanda>', methods = ['GET'])
 def LimparPedido(Ncomanda):
@@ -95,43 +95,98 @@ def LimparPedido(Ncomanda):
     nome_procurado = Ncomanda
     Comandas.remove(indice_pessoas_por_nome[nome_procurado])
 
-    return jsonify(Geral)
+    return jsonify(Comandas)
 
 @app.route('/MostraFinalizadas', methods = ['GET'])
 def ComandasFinalizadas():
+    Finalizadas.clear()
+
+    cursor2 = con.cursor()
+    cursor2.execute("select * from comandaFinalizada;")
+    Linhas = cursor2.fetchall()
+    print(Linhas)
+
+    cursor3 = con.cursor()
+    cursor3.execute("select `idComanda`, `nomePessoa` as 'Nome', sum(`preco`) as 'Preço final' from `comandaFinalizada` inner join `cardapio` on `comandaFinalizada`.`idProduto` = `cardapio`.`idProduto` group by `idComanda`;")
+    Linhas2 = cursor3.fetchall()
+    print(Linhas2)
+
+    for linha2 in Linhas2:
+        Finalizadas.append({"Nome":linha2[1]})
+
+    for linha2 in Linhas2:
+        for linha1 in Linhas:
+            for linha in linhas:
+                if linha1[1] == linha[0]:
+                    if linha1[2] == linha2[1]:
+                        indice_pessoas_por_nome = {d["Nome"]: d for d in Finalizadas}
+                        nome_procurado = linha2[1]
+                        indice_pessoas_por_nome[nome_procurado].update({linha[1]:{"Quantidade": linha1[3], "Valor": linha[2]}})
+                        indice_pessoas_por_nome[nome_procurado].update({"Total": linha2[2], "Data": linha1[4]})
     return jsonify(Finalizadas)
 
 @app.route('/Finaliza/<string:Ncomanda>', methods = ['GET'])
 def FinalizaComanda(Ncomanda):
 
-    ComandaF = {}
+    #Código teste
+    #NÃO será utilizado para finalizar
 
     indice_pessoas_por_nome = {d["Nome"]: d for d in Comandas}
-    nome_procurado = Ncomanda
-    ComandaF = indice_pessoas_por_nome[nome_procurado].copy()
-    Finalizadas.append(ComandaF)
-    Comandas.remove(indice_pessoas_por_nome[nome_procurado])
+    nome_procurado = "Fernanda"
+    ComandaProcurada = indice_pessoas_por_nome[nome_procurado]
+    indice_item_por_nome = {a["Nome"]: a for a in ComandaProcurada["Itens"]}
+    item_procurado = "Carne Louca"
+    print(indice_item_por_nome[item_procurado]["Preco"])
+
+    #ComandaF = {}
+
+    #indice_pessoas_por_nome = {d["Nome"]: d for d in Comandas}
+    #nome_procurado = Ncomanda
+    #ComandaF = indice_pessoas_por_nome[nome_procurado].copy()
+    #Finalizadas.append(ComandaF)
+    #Comandas.remove(indice_pessoas_por_nome[nome_procurado])
     
     return jsonify(Finalizadas)
 
 @app.route('/AddNaComanda/<string:Ncomanda>', methods = ['POST'])
 def AddNaComanda(Ncomanda):
     data = request.get_json()
+    
     indice_pessoas_por_nome = {d["Nome"]: d for d in Comandas}
     nome_procurado = Ncomanda
-    indice_pessoas_por_nome[nome_procurado].update(data)
+    ComandaProcurada = indice_pessoas_por_nome[nome_procurado]
+    ComandaProcurada["Itens"].append(data)
 
-    return jsonify(indice_pessoas_por_nome[nome_procurado])
+    return jsonify(ComandaProcurada)
 
 @app.route('/RemoveDaComanda/<string:Ncomanda>/<string:Item>', methods = ['GET'])
 def RemoveDaComanda(Ncomanda,Item):
+
     indice_pessoas_por_nome = {d["Nome"]: d for d in Comandas}
     nome_procurado = Ncomanda
-    Comanda = indice_pessoas_por_nome[nome_procurado]
-    del Comanda[Item]
-    
+    ComandaProcurada = indice_pessoas_por_nome[nome_procurado]
+    indice_item_por_nome = {a["Nome"]: a for a in ComandaProcurada["Itens"]}
+    item_procurado = Item
+    estrutura_do_item = indice_item_por_nome[item_procurado]
+    ComandaProcurada["Itens"].remove(estrutura_do_item)
 
-    return jsonify(indice_pessoas_por_nome[nome_procurado])
+    return jsonify(ComandaProcurada)
+
+@app.route('/EditaItem', methods = ['POST'])
+def EditaItem():
+    data = request.get_json()
+    ItemAlterado = {}
+    ItemAlterado.update(data)
+
+    indice_pessoas_por_nome = {d["Nome"]: d for d in Comandas}
+    nome_procurado = ItemAlterado["Nome"]
+    ComandaProcurada = indice_pessoas_por_nome[nome_procurado]
+    indice_item_por_nome = {a["Nome"]: a for a in ComandaProcurada["Itens"]}
+    item_procurado = ItemAlterado["Item"]
+    estrutura_do_item = indice_item_por_nome[item_procurado]
+    estrutura_do_item.update({"Quantidade": ItemAlterado["Quantidade"]})
+
+    return jsonify(Comandas)
 
 
 @app.route('/AddNoCardapio', methods = ['POST'])
