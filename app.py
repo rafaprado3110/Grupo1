@@ -139,7 +139,7 @@ def ComandasFinalizadas():
     print(Linhas)
 
     cursor3 = con.cursor()
-    cursor3.execute("select `idComanda`, `nomePessoa` as 'Nome', sum(`preco`) as 'Preço final' from `comandaFinalizada` inner join `cardapio` on `comandaFinalizada`.`idProduto` = `cardapio`.`idProduto` group by `idComanda`;")
+    cursor3.execute("select `idComanda`, `nomePessoa` as 'Nome', sum(`preco` * `qtdProduto`) as 'Preço final' from `comandaFinalizada` inner join `cardapio` on `comandaFinalizada`.`idProduto` = `cardapio`.`idProduto` group by `idComanda`;")
     Linhas2 = cursor3.fetchall()
     print(Linhas2)
 
