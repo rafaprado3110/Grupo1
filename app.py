@@ -1,10 +1,10 @@
 import re, mysql.connector
+from datetime import date
 from flask import Flask, json, jsonify, request
 
 app = Flask(__name__)
 
 Finalizadas = []
-
 Comandas = []
 
 
@@ -28,6 +28,26 @@ Caldos = {}
 
 Cardapio = {"Lanches": Lanches, "Salgados": Salgados, "Escondidinhos": Escondidinhos, "Caldos": Caldos, "Tapiocas": Tapiocas, "Bebidas": Bebidas, "Porcoes": Porcoes}
 
+EmpadasI = {}
+TortasI = {}
+SanduicheI = {}
+HotDogI = {}
+TSalgadasI = {}
+TDocesI = {}
+BAlcoolI = {}
+BSemAlcoolI = {}
+SucosDetoxI = {}
+
+LanchesI = {"Sanduiches": SanduicheI, "Hot-Dog": HotDogI}
+SalgadosI = {"Empadas": EmpadasI, "Tortas": TortasI}
+TapiocasI = {"Salgadas": TSalgadasI, "Doces": TDocesI}
+BebidasI = {"Alcoolico": BAlcoolI, "Nao-alcoolico": BSemAlcoolI, "Sucos-Detox": SucosDetoxI}
+PorcoesI = {}
+EscondidinhosI = {}
+CaldosI = {}
+
+Imagens = {"Lanches": LanchesI, "Salgados": SalgadosI, "Escondidinhos": EscondidinhosI, "Caldos": CaldosI, "Tapiocas": TapiocasI, "Bebidas": BebidasI, "Porcoes": PorcoesI}
+
 Geral = [{"Cardapio": Cardapio}, Comandas]
 
 con = mysql.connector.connect(host = 'us-cdbr-east-04.cleardb.com', database = 'heroku_b200452de328eaa', user = 'b29ac0776cb380', password = '68cf88e1')
@@ -39,28 +59,40 @@ print(linhas)
 for linha in linhas:
     if linha[4] == "empadas":
         Empadas[linha[1]] = linha[2]
+        EmpadasI[linha[1]] = linha[5]
     elif linha[4] == "tortas":
         Tortas[linha[1]] = linha[2]
+        TortasI[linha[1]] = linha[5]
     elif linha[4] == "hot-dogs":
         HotDog[linha[1]] = linha[2]
+        HotDogI[linha[1]] = linha[5]
     elif linha[4] == "sanduiches":
         Sanduiche[linha[1]] = linha[2]
+        SanduicheI[linha[1]] = linha[5]
     elif linha[4] == "escondidinhos":
         Escondidinhos[linha[1]] = linha[2]
+        EscondidinhosI[linha[1]] = linha[5]
     elif linha[4] == "caldos":
         Caldos[linha[1]] = linha[2]
+        CaldosI[linha[1]] = linha[5]
     elif linha[4] == "salgadas":
         TSalgadas[linha[1]] = linha[2]
+        TSalgadasI[linha[1]] = linha[5]
     elif linha[4] == "doces":
         TDoces[linha[1]] = linha[2]
+        TDocesI[linha[1]] = linha[5]
     elif linha[4] == "alcoólicas":
         BAlcool[linha[1]] = linha[2]
+        BAlcoolI[linha[1]] = linha[5]
     elif linha[4] == "não-alcoólicas":
         BSemAlcool[linha[1]] = linha[2]
+        BSemAlcoolI[linha[1]] = linha[5]
     elif linha[4] == "sucos detox":
         SucosDetox[linha[1]] = linha[2]
+        SucosDetoxI[linha[1]] = linha[5]
     elif linha[4] == "porções":
         Porcoes[linha[1]] = linha[2]
+        PorcoesI[linha[1]] = linha[5]
 
 @app.route('/', methods =['GET'])
 def raiz():
@@ -125,18 +157,52 @@ def ComandasFinalizadas():
                         indice_pessoas_por_nome[nome_procurado].update({"Total": linha2[2], "Data": linha1[4]})
     return jsonify(Finalizadas)
 
+@app.route('/ImagemItens', methods = ['GET'])
+def ImagemDosItens():
+    
+    return jsonify(Imagens)
+
 @app.route('/Finaliza/<string:Ncomanda>', methods = ['GET'])
 def FinalizaComanda(Ncomanda):
 
     #Código teste
     #NÃO será utilizado para finalizar
 
+    now = date.today()
+
+    cursor2 = con.cursor()
+    cursor2.execute("select `idComanda`, `nomePessoa` as 'Nome', sum(`preco`) as 'Preço final' from `comandaFinalizada` inner join `cardapio` on `comandaFinalizada`.`idProduto` = `cardapio`.`idProduto` group by `idComanda`;")
+    Linhas2 = cursor2.fetchall()
+
+    for linha2 in Linhas2:
+        id = linha2[0] + 1
+
     indice_pessoas_por_nome = {d["Nome"]: d for d in Comandas}
-    nome_procurado = "Fernanda"
+    nome_procurado = Ncomanda
     ComandaProcurada = indice_pessoas_por_nome[nome_procurado]
-    indice_item_por_nome = {a["Nome"]: a for a in ComandaProcurada["Itens"]}
-    item_procurado = "Carne Louca"
-    print(indice_item_por_nome[item_procurado]["Preco"])
+
+    ComandaParaFinalizar = ""
+
+    for a in ComandaProcurada["Itens"]:
+        for linha in linhas:
+            if a["Nome"] == linha[1]:
+                if float(a["Preco"]) == linha[2]:
+                    if ComandaParaFinalizar == "":
+                        ComandaParaFinalizar = str(ComandaParaFinalizar) + "(" + str(id) + ", " + str(linha[0]) + ", '" + Ncomanda + "', " + str(a["Quantidade"]) + ", " + str(now) + ")"
+                    else:
+                        ComandaParaFinalizar = str(ComandaParaFinalizar) + ", (" + str(id) + ", " + str(linha[0]) + ", '" + Ncomanda + "', " + str(a["Quantidade"]) + ", " + str(now) + ")"
+
+                    #print(linha[1] + ", " + str(linha[0]))
+        #print(str(a["Quantidade"]) + ", " + a["Nome"] + ", " + str(a["Preco"]) + ", " + str(now) + ", " + str(id))
+    ComandaParaFinalizar = ComandaParaFinalizar + ";"
+    print("insert into `comandaFinalizada` (`idComanda`, `idProduto`, `nomePessoa`, `qtdProduto`, `data`) values " + ComandaParaFinalizar)
+
+    bd = con.cursor()
+    bd.execute("insert into `comandaFinalizada` (`idComanda`, `idProduto`, `nomePessoa`, `qtdProduto`, `data`) values " + ComandaParaFinalizar)
+    #con.commit()
+
+    #item_procurado = "Carne Louca"
+    #print(indice_item_por_nome[item_procurado]["Preco"])
 
     #ComandaF = {}
 
