@@ -165,9 +165,6 @@ def ImagemDosItens():
 @app.route('/Finaliza/<string:Ncomanda>', methods = ['GET'])
 def FinalizaComanda(Ncomanda):
 
-    #Código teste
-    #NÃO será utilizado para finalizar
-
     now = date.today()
 
     cursor2 = con.cursor()
@@ -192,26 +189,15 @@ def FinalizaComanda(Ncomanda):
                     else:
                         ComandaParaFinalizar = str(ComandaParaFinalizar) + ", (" + str(id) + ", " + str(linha[0]) + ", '" + Ncomanda + "', " + str(a["Quantidade"]) + ", " + str(now) + ")"
 
-                    #print(linha[1] + ", " + str(linha[0]))
-        #print(str(a["Quantidade"]) + ", " + a["Nome"] + ", " + str(a["Preco"]) + ", " + str(now) + ", " + str(id))
     ComandaParaFinalizar = ComandaParaFinalizar + ";"
     print("insert into `comandaFinalizada` (`idComanda`, `idProduto`, `nomePessoa`, `qtdProduto`, `data`) values " + ComandaParaFinalizar)
 
     bd = con.cursor()
     bd.execute("insert into `comandaFinalizada` (`idComanda`, `idProduto`, `nomePessoa`, `qtdProduto`, `data`) values " + ComandaParaFinalizar)
-    #con.commit()
-
-    #item_procurado = "Carne Louca"
-    #print(indice_item_por_nome[item_procurado]["Preco"])
-
-    #ComandaF = {}
-
-    #indice_pessoas_por_nome = {d["Nome"]: d for d in Comandas}
-    #nome_procurado = Ncomanda
-    #ComandaF = indice_pessoas_por_nome[nome_procurado].copy()
-    #Finalizadas.append(ComandaF)
-    #Comandas.remove(indice_pessoas_por_nome[nome_procurado])
+    con.commit()
     
+    Comandas.remove(indice_pessoas_por_nome[nome_procurado])
+
     return jsonify(Finalizadas)
 
 @app.route('/AddNaComanda/<string:Ncomanda>', methods = ['POST'])
