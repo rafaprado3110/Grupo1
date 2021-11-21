@@ -185,9 +185,9 @@ def FinalizaComanda(Ncomanda):
             if a["Nome"] == linha[1]:
                 if float(a["Preco"]) == linha[2]:
                     if ComandaParaFinalizar == "":
-                        ComandaParaFinalizar = str(ComandaParaFinalizar) + "(" + str(id) + ", " + str(linha[0]) + ", '" + Ncomanda + "', " + str(a["Quantidade"]) + ", " + str(now) + ")"
+                        ComandaParaFinalizar = str(ComandaParaFinalizar) + "(" + str(id) + ", " + str(linha[0]) + ", '" + Ncomanda + "', " + str(a["Quantidade"]) + ", '" + str(now) + "')"
                     else:
-                        ComandaParaFinalizar = str(ComandaParaFinalizar) + ", (" + str(id) + ", " + str(linha[0]) + ", '" + Ncomanda + "', " + str(a["Quantidade"]) + ", " + str(now) + ")"
+                        ComandaParaFinalizar = str(ComandaParaFinalizar) + ", (" + str(id) + ", " + str(linha[0]) + ", '" + Ncomanda + "', " + str(a["Quantidade"]) + ", '" + str(now) + "')"
 
     ComandaParaFinalizar = ComandaParaFinalizar + ";"
     print("insert into `comandaFinalizada` (`idComanda`, `idProduto`, `nomePessoa`, `qtdProduto`, `data`) values " + ComandaParaFinalizar)
