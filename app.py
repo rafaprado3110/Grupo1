@@ -1,5 +1,5 @@
 import re, mysql.connector
-from datetime import date
+from datetime import datetime
 from flask import Flask, json, jsonify, request
 
 app = Flask(__name__)
@@ -171,7 +171,8 @@ def ImagemDosItens():
 @app.route('/Finaliza/<string:Ncomanda>', methods = ['GET'])
 def FinalizaComanda(Ncomanda):
 
-    now = date.today()
+    now = datetime.today()
+    today = now.strftime("%d/%m/%Y")
     
     banco = mysql.connector.connect(host = 'us-cdbr-east-04.cleardb.com', database = 'heroku_b200452de328eaa', user = 'b29ac0776cb380', password = '68cf88e1')
 
@@ -195,9 +196,9 @@ def FinalizaComanda(Ncomanda):
             if a["Nome"] == linha[1]:
                 if float(a["Preco"]) == linha[2]:
                     if ComandaParaFinalizar == "":
-                        ComandaParaFinalizar = str(ComandaParaFinalizar) + "(" + str(id) + ", " + str(linha[0]) + ", '" + Ncomanda + "', " + str(a["Quantidade"]) + ", '" + str(now) + "')"
+                        ComandaParaFinalizar = str(ComandaParaFinalizar) + "(" + str(id) + ", " + str(linha[0]) + ", '" + Ncomanda + "', " + str(a["Quantidade"]) + ", '" + today + "')"
                     else:
-                        ComandaParaFinalizar = str(ComandaParaFinalizar) + ", (" + str(id) + ", " + str(linha[0]) + ", '" + Ncomanda + "', " + str(a["Quantidade"]) + ", '" + str(now) + "')"
+                        ComandaParaFinalizar = str(ComandaParaFinalizar) + ", (" + str(id) + ", " + str(linha[0]) + ", '" + Ncomanda + "', " + str(a["Quantidade"]) + ", '" + today + "')"
 
     ComandaParaFinalizar = ComandaParaFinalizar + ";"
     print("insert into `comandaFinalizada` (`idComanda`, `idProduto`, `nomePessoa`, `qtdProduto`, `data`) values " + ComandaParaFinalizar)
