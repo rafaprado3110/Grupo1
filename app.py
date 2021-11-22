@@ -132,7 +132,7 @@ def LimparPedido(Ncomanda):
 @app.route('/MostraFinalizadas', methods = ['GET'])
 def ComandasFinalizadas():
     Finalizadas.clear()
-
+    
     cursor2 = con.cursor()
     cursor2.execute("select * from comandaFinalizada;")
     Linhas = cursor2.fetchall()
@@ -144,17 +144,17 @@ def ComandasFinalizadas():
     print(Linhas2)
 
     for linha2 in Linhas2:
-        Finalizadas.append({"Nome":linha2[1]})
-
-    for linha2 in Linhas2:
+        itens = []
+        data = ""
         for linha1 in Linhas:
-            for linha in linhas:
-                if linha1[1] == linha[0]:
-                    if linha1[2] == linha2[1]:
-                        indice_pessoas_por_nome = {d["Nome"]: d for d in Finalizadas}
-                        nome_procurado = linha2[1]
-                        indice_pessoas_por_nome[nome_procurado].update({linha[1]:{"Quantidade": linha1[3], "Valor": linha[2]}})
-                        indice_pessoas_por_nome[nome_procurado].update({"Total": linha2[2], "Data": linha1[4]})
+            if linha1[0] == linha2[0]:
+                for linha in linhas:
+                    if linha[0] == linha1[1]:
+                        itens.append({"Nome": linha[1], "Quantidade": linha1[3], "Valor": linha[2]})
+                data = linha1[4]
+
+        Finalizadas.append({"Nome":linha2[1], "Itens": itens, "Total": linha2[2], "Data": data})
+
     return jsonify(Finalizadas)
 
 @app.route('/ImagemItens', methods = ['GET'])
@@ -171,9 +171,11 @@ def FinalizaComanda(Ncomanda):
     cursor2.execute("select `idComanda`, `nomePessoa` as 'Nome', sum(`preco`) as 'Preço final' from `comandaFinalizada` inner join `cardapio` on `comandaFinalizada`.`idProduto` = `cardapio`.`idProduto` group by `idComanda`;")
     Linhas2 = cursor2.fetchall()
 
-    for linha2 in Linhas2:
-        id = linha2[0] + 1
-
+    if Linhas2 == []:
+        id = 1
+    else:
+        id = Linhas2[len(Linhas2) - 1][0] + 1
+    
     indice_pessoas_por_nome = {d["Nome"]: d for d in Comandas}
     nome_procurado = Ncomanda
     ComandaProcurada = indice_pessoas_por_nome[nome_procurado]
