@@ -154,7 +154,7 @@ def ComandasFinalizadas():
             if linha1[0] == linha2[0]:
                 for linha in linhas:
                     if linha[0] == linha1[1]:
-                        itens.append({"Nome": linha[1], "Quantidade": linha1[3], "Valor": linha[2]})
+                        itens.append({"Nome": linha[1], "Quantidade": linha1[3], "Valor": linha[2], "Nome Imagem": linha[5]})
                 data = linha1[4]
 
         Finalizadas.append({"Nome":linha2[1], "Itens": itens, "Total": linha2[2], "Data": data})
