@@ -93,6 +93,8 @@ for linha in linhas:
     elif linha[4] == "porções":
         Porcoes[linha[1]] = linha[2]
         PorcoesI[linha[1]] = linha[5]
+    
+    con.close()
 
 @app.route('/', methods =['GET'])
 def raiz():
@@ -133,12 +135,14 @@ def LimparPedido(Ncomanda):
 def ComandasFinalizadas():
     Finalizadas.clear()
     
-    cursor2 = con.cursor()
+    banco = mysql.connector.connect(host = 'us-cdbr-east-04.cleardb.com', database = 'heroku_b200452de328eaa', user = 'b29ac0776cb380', password = '68cf88e1')
+    
+    cursor2 = banco.cursor()
     cursor2.execute("select * from comandaFinalizada;")
     Linhas = cursor2.fetchall()
     print(Linhas)
 
-    cursor3 = con.cursor()
+    cursor3 = banco.cursor()
     cursor3.execute("select `idComanda`, `nomePessoa` as 'Nome', sum(`preco` * `qtdProduto`) as 'Preço final' from `comandaFinalizada` inner join `cardapio` on `comandaFinalizada`.`idProduto` = `cardapio`.`idProduto` group by `idComanda`;")
     Linhas2 = cursor3.fetchall()
     print(Linhas2)
@@ -155,6 +159,8 @@ def ComandasFinalizadas():
 
         Finalizadas.append({"Nome":linha2[1], "Itens": itens, "Total": linha2[2], "Data": data})
 
+    banco.close()
+
     return jsonify(Finalizadas)
 
 @app.route('/ImagemItens', methods = ['GET'])
@@ -166,8 +172,10 @@ def ImagemDosItens():
 def FinalizaComanda(Ncomanda):
 
     now = date.today()
+    
+    banco = mysql.connector.connect(host = 'us-cdbr-east-04.cleardb.com', database = 'heroku_b200452de328eaa', user = 'b29ac0776cb380', password = '68cf88e1')
 
-    cursor2 = con.cursor()
+    cursor2 = banco.cursor()
     cursor2.execute("select `idComanda`, `nomePessoa` as 'Nome', sum(`preco`) as 'Preço final' from `comandaFinalizada` inner join `cardapio` on `comandaFinalizada`.`idProduto` = `cardapio`.`idProduto` group by `idComanda`;")
     Linhas2 = cursor2.fetchall()
 
@@ -194,11 +202,13 @@ def FinalizaComanda(Ncomanda):
     ComandaParaFinalizar = ComandaParaFinalizar + ";"
     print("insert into `comandaFinalizada` (`idComanda`, `idProduto`, `nomePessoa`, `qtdProduto`, `data`) values " + ComandaParaFinalizar)
 
-    bd = con.cursor()
+    bd = banco.cursor()
     bd.execute("insert into `comandaFinalizada` (`idComanda`, `idProduto`, `nomePessoa`, `qtdProduto`, `data`) values " + ComandaParaFinalizar)
-    con.commit()
+    banco.commit()
     
     Comandas.remove(indice_pessoas_por_nome[nome_procurado])
+
+    banco.close()
 
     return jsonify(Finalizadas)
 
