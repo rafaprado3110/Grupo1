@@ -98,6 +98,32 @@ for linha in linhas:
 
 @app.route('/', methods =['GET'])
 def raiz():
+    Geral = []
+    Comandas = []
+    banco = mysql.connector.connect(host = 'us-cdbr-east-04.cleardb.com', database = 'heroku_b200452de328eaa', user = 'b29ac0776cb380', password = '68cf88e1')
+    
+    cursor2 = banco.cursor()
+    cursor2.execute("select * from comandaAberta;")
+    Linhas = cursor2.fetchall()
+    print(Linhas)
+    cursor3 = banco.cursor()
+    cursor3.execute("select `idComanda`, `nomePessoa` as 'Nome', sum(`preco` * `qtdProduto`) as 'Preço final' from `comandaAberta` inner join `cardapio` on `comandaAberta`.`idProduto` = `cardapio`.`idProduto` group by `idComanda`;")
+    Linhas2 = cursor3.fetchall()
+    print(Linhas2)
+
+    for linha2 in Linhas2:
+        itens = []
+        data = ""
+        for linha1 in Linhas:
+            if linha1[0] == linha2[0]:
+                for linha in linhas:
+                    if linha[0] == linha1[1]:
+                        itens.append({"Nome": linha[1], "Quantidade": linha1[4], "Preco": linha[2], "Nome Imagem": linha[5], "Observacoes": linha1[2]})
+
+        Comandas.append({"Nome":linha2[1], "Itens": itens, "Total": linha2[2]})
+
+    banco.close()
+    Geral = [{"Cardapio": Cardapio}, Comandas]
     return jsonify(Geral)
 
 @app.route('/MostraCardapio', methods =['GET'])
