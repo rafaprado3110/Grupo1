@@ -113,14 +113,13 @@ def raiz():
 
     for linha2 in Linhas2:
         itens = []
-        data = ""
         for linha1 in Linhas:
             if linha1[0] == linha2[0]:
                 for linha in linhas:
                     if linha[0] == linha1[1]:
                         itens.append({"Nome": linha[1], "Quantidade": linha1[4], "Preco": linha[2], "Nome Imagem": linha[5], "Observacoes": linha1[2]})
 
-        Comandas.append({"Nome":linha2[1], "Itens": itens, "Total": linha2[2]})
+        Comandas.append({"Nome":linha2[1], "Itens": itens, "Total": linha2[2], "id": linha2[0]})
 
     banco.close()
     Geral = [{"Cardapio": Cardapio}, Comandas]
@@ -146,23 +145,46 @@ def GetComandas():
 
     for linha2 in Linhas2:
         itens = []
-        data = ""
         for linha1 in Linhas:
             if linha1[0] == linha2[0]:
                 for linha in linhas:
                     if linha[0] == linha1[1]:
                         itens.append({"Nome": linha[1], "Quantidade": linha1[4], "Preco": linha[2], "Nome Imagem": linha[5], "Observacoes": linha1[2]})
 
-        Comandas.append({"Nome":linha2[1], "Itens": itens, "Total": linha2[2]})
+        Comandas.append({"Nome":linha2[1], "Itens": itens, "Total": linha2[2], "id": linha2[0]})
 
     banco.close()
 
     return jsonify(Comandas)
 
-@app.route('/MostraComandaPorNome/<string:Ncomanda>', methods =['GET'])
-def GetComandaPorNome(Ncomanda):
-    indice_pessoas_por_nome = {d["Nome"]: d for d in Comandas}
-    nome_procurado = Ncomanda
+@app.route('/MostraComandaPorID/<string:ID>', methods =['GET'])
+def GetComandaPorNome(ID):
+    Comandas = []
+    banco = mysql.connector.connect(host = 'us-cdbr-east-04.cleardb.com', database = 'heroku_b200452de328eaa', user = 'b29ac0776cb380', password = '68cf88e1')
+    
+    cursor2 = banco.cursor()
+    cursor2.execute("select * from comandaAberta;")
+    Linhas = cursor2.fetchall()
+    print(Linhas)
+    cursor3 = banco.cursor()
+    cursor3.execute("select `idComanda`, `nomePessoa` as 'Nome', sum(`preco` * `qtdProduto`) as 'Preço final' from `comandaAberta` inner join `cardapio` on `comandaAberta`.`idProduto` = `cardapio`.`idProduto` group by `idComanda`;")
+    Linhas2 = cursor3.fetchall()
+    print(Linhas2)
+
+    for linha2 in Linhas2:
+        itens = []
+        for linha1 in Linhas:
+            if linha1[0] == linha2[0]:
+                for linha in linhas:
+                    if linha[0] == linha1[1]:
+                        itens.append({"Nome": linha[1], "Quantidade": linha1[4], "Preco": linha[2], "Nome Imagem": linha[5], "Observacoes": linha1[2]})
+
+        Comandas.append({"Nome":linha2[1], "Itens": itens, "Total": linha2[2], "id": linha2[0]})
+
+    banco.close()
+    
+    indice_pessoas_por_nome = {d["id"]: d for d in Comandas}
+    nome_procurado = int(ID)
     return jsonify(indice_pessoas_por_nome[nome_procurado])
 
 @app.route('/Pedido', methods = ['POST'])
@@ -204,13 +226,15 @@ def PedidoFeito():
     
     return jsonify(Comandas)
 
-@app.route('/LimparComanda/<string:Ncomanda>', methods = ['GET'])
-def LimparPedido(Ncomanda):
+@app.route('/LimparComanda/<string:ID>', methods = ['GET'])
+def LimparPedido(ID):
+    banco = mysql.connector.connect(host = 'us-cdbr-east-04.cleardb.com', database = 'heroku_b200452de328eaa', user = 'b29ac0776cb380', password = '68cf88e1')
+    
+    bd = banco.cursor()
+    bd.execute("delete from `comandaAberta` where idComanda = " + ID)
+    banco.commit()
 
-    indice_pessoas_por_nome = {d["Nome"]: d for d in Comandas}
-    nome_procurado = Ncomanda
-    Comandas.remove(indice_pessoas_por_nome[nome_procurado])
-
+    banco.close()
     return jsonify(Comandas)
 
 @app.route('/MostraFinalizadas', methods = ['GET'])
@@ -250,10 +274,8 @@ def ImagemDosItens():
     
     return jsonify(Imagens)
 
-@app.route('/Finaliza/<string:Ncomanda>', methods = ['GET'])
-def FinalizaComanda(Ncomanda):
-    #delete from `comandasAbertas` where `nomePessoa` =
-    
+@app.route('/Finaliza/<string:ID>', methods = ['GET'])
+def FinalizaComanda(ID):
     Comandas = []
 
     now = datetime.today()
@@ -273,25 +295,22 @@ def FinalizaComanda(Ncomanda):
     Linhas4 = cursor4.fetchall()
     print(Linhas4)
     for linha2 in Linhas4:
-        if str(linha2[1]) == Ncomanda:
-            idBusca = linha2[0]
         itens = []
-        data = ""
         for linha1 in Linhas3:
             if linha1[0] == linha2[0]:
                 for linha in linhas:
                     if linha[0] == linha1[1]:
                         itens.append({"Nome": linha[1], "Quantidade": linha1[4], "Preco": linha[2], "Nome Imagem": linha[5], "Observacoes": linha1[2]})
 
-        Comandas.append({"Nome":linha2[1], "Itens": itens, "Total": linha2[2]})
+        Comandas.append({"Nome":linha2[1], "Itens": itens, "Total": linha2[2], "id": linha2[0]})
 
     if Linhas2 == []:
         id = 1
     else:
         id = Linhas2[len(Linhas2) - 1][0] + 1
     
-    indice_pessoas_por_nome = {d["Nome"]: d for d in Comandas}
-    nome_procurado = Ncomanda
+    indice_pessoas_por_nome = {d["id"]: d for d in Comandas}
+    nome_procurado = int(ID)
     ComandaProcurada = indice_pessoas_por_nome[nome_procurado]
 
     ComandaParaFinalizar = ""
@@ -301,16 +320,16 @@ def FinalizaComanda(Ncomanda):
             if a["Nome"] == linha[1]:
                 if float(a["Preco"]) == linha[2]:
                     if ComandaParaFinalizar == "":
-                        ComandaParaFinalizar = str(ComandaParaFinalizar) + "(" + str(id) + ", " + str(linha[0]) + ", '" + Ncomanda + "', " + str(a["Quantidade"]) + ", '" + today + "')"
+                        ComandaParaFinalizar = str(ComandaParaFinalizar) + "(" + str(id) + ", " + str(linha[0]) + ", '" + ComandaProcurada["Nome"] + "', " + str(a["Quantidade"]) + ", '" + today + "')"
                     else:
-                        ComandaParaFinalizar = str(ComandaParaFinalizar) + ", (" + str(id) + ", " + str(linha[0]) + ", '" + Ncomanda + "', " + str(a["Quantidade"]) + ", '" + today + "')"
+                        ComandaParaFinalizar = str(ComandaParaFinalizar) + ", (" + str(id) + ", " + str(linha[0]) + ", '" + ComandaProcurada["Nome"] + "', " + str(a["Quantidade"]) + ", '" + today + "')"
 
     ComandaParaFinalizar = ComandaParaFinalizar + ";"
     print("insert into `comandaFinalizada` (`idComanda`, `idProduto`, `nomePessoa`, `qtdProduto`, `data`) values " + ComandaParaFinalizar)
 
     bd = banco.cursor()
     bd.execute("insert into `comandaFinalizada` (`idComanda`, `idProduto`, `nomePessoa`, `qtdProduto`, `data`) values " + ComandaParaFinalizar)
-    bd.execute("delete from `comandaAberta` where idComanda = " + str(idBusca))
+    bd.execute("delete from `comandaAberta` where idComanda = " + ID)
     banco.commit()
     
     Comandas.remove(indice_pessoas_por_nome[nome_procurado])
@@ -319,54 +338,60 @@ def FinalizaComanda(Ncomanda):
 
     return jsonify(Finalizadas)
 
-@app.route('/AddNaComanda/<string:Ncomanda>', methods = ['POST'])
-def AddNaComanda(Ncomanda):
+@app.route('/AddNaComanda/<string:ID>', methods = ['POST'])
+def AddNaComanda(ID):
     data = request.get_json()
+    banco = mysql.connector.connect(host = 'us-cdbr-east-04.cleardb.com', database = 'heroku_b200452de328eaa', user = 'b29ac0776cb380', password = '68cf88e1')
+    ComandaParaAdicionar = ""
+
+    for item in data["Itens"]:
+        for linha in linhas:
+            if item["Nome"] == linha[1] and item["Preco"] == linha[2]:
+                if ComandaParaAdicionar == "":
+                    ComandaParaAdicionar= str(ComandaParaAdicionar) + "(" + ID + ", " + str(linha[0]) + ", '" + item["Observacoes"] + "', '" + data["Nome"] + "', " + str(item["Quantidade"]) + ")"
+                else:
+                    ComandaParaAdicionar = str(ComandaParaAdicionar) + ", (" + ID + ", " + str(linha[0]) + ", '" + item["Observacoes"] + "', '" + data["Nome"] + "', " + str(item["Quantidade"]) + ")"
     
-    indice_pessoas_por_nome = {d["Nome"]: d for d in Comandas}
-    nome_procurado = Ncomanda
-    ComandaProcurada = indice_pessoas_por_nome[nome_procurado]
-    ComandaProcurada["Itens"].append(data)
+    ComandaParaAdicionar = ComandaParaAdicionar + ";"
+    print("insert into `comandaAberta` (`idComanda`, `idProduto`, `obs`, `nomePessoa`, `qtdProduto`) values " + ComandaParaAdicionar)
 
-    return jsonify(ComandaProcurada)
+    bd = banco.cursor()
+    bd.execute("insert into `comandaAberta` (`idComanda`, `idProduto`, `obs`, `nomePessoa`, `qtdProduto`) values " + ComandaParaAdicionar)
+    banco.commit()
+    
+    banco.close()
 
-@app.route('/RemoveDaComanda/<string:Ncomanda>/<string:Item>', methods = ['GET'])
-def RemoveDaComanda(Ncomanda,Item):
+    return jsonify()
 
-    indice_pessoas_por_nome = {d["Nome"]: d for d in Comandas}
-    nome_procurado = Ncomanda
-    ComandaProcurada = indice_pessoas_por_nome[nome_procurado]
-    indice_item_por_nome = {a["Nome"]: a for a in ComandaProcurada["Itens"]}
-    item_procurado = Item
-    estrutura_do_item = indice_item_por_nome[item_procurado]
-    ComandaProcurada["Itens"].remove(estrutura_do_item)
+@app.route('/RemoveDaComanda/<string:ID>/<string:Item>/<string:Preco>', methods = ['GET'])
+def RemoveDaComanda(ID,Item,Preco):
+    banco = mysql.connector.connect(host = 'us-cdbr-east-04.cleardb.com', database = 'heroku_b200452de328eaa', user = 'b29ac0776cb380', password = '68cf88e1')
 
-    return jsonify(ComandaProcurada)
+    for linha in linhas:
+        if float(Preco) == float(linha[2]) and str(Item) == str(linha[1]):
+            idItem = linha[0]
 
-@app.route('/EditaItem', methods = ['POST'])
-def EditaItem():
+    bd = banco.cursor()
+    bd.execute("delete from `comandaAberta` where idComanda = " + ID + " and idProduto = " + str(idItem))
+    banco.commit()
+    
+    banco.close()
+
+    return jsonify()
+
+@app.route('/EditaItem/<string:ID>', methods = ['POST'])
+def EditaItem(ID):
+    banco = mysql.connector.connect(host = 'us-cdbr-east-04.cleardb.com', database = 'heroku_b200452de328eaa', user = 'b29ac0776cb380', password = '68cf88e1')
     data = request.get_json()
-    ItemAlterado = {}
-    ItemAlterado.update(data)
 
-    indice_pessoas_por_nome = {d["Nome"]: d for d in Comandas}
-    nome_procurado = ItemAlterado["Nome"]
-    ComandaProcurada = indice_pessoas_por_nome[nome_procurado]
-    indice_item_por_nome = {a["Nome"]: a for a in ComandaProcurada["Itens"]}
-    item_procurado = ItemAlterado["Item"]
-    estrutura_do_item = indice_item_por_nome[item_procurado]
-    estrutura_do_item.update({"Quantidade": ItemAlterado["Quantidade"]})
+    for item in data["Itens"]:
+        for linha in linhas:
+            if float(item["Preco"]) == float(linha[2]) and item["Nome"] == linha[1]:
+                idItem = linha[0]
+                bd = banco.cursor()
+                bd.execute("UPDATE `comandaAberta` SET `qtdProduto`= " + str(item["Quantidade"]) + " where `idProduto` = "+ str(idItem) + " and `idComanda` = " + ID)
+                banco.commit()
+                
+    banco.close()
 
-    return jsonify(Comandas)
-
-
-@app.route('/AddNoCardapio', methods = ['POST'])
-def ColocaNoCardapio():
-    data = request.get_json()
-    Cardapio.update(data)
-    return(Cardapio)
-
-@app.route('/RemoveDoCardapio/<string:Item>', methods = ['GET'])
-def TiraDoCardapio(Item):
-    del Cardapio[Item]
-    return (Cardapio)
+    return jsonify()
