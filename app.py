@@ -252,6 +252,9 @@ def ImagemDosItens():
 
 @app.route('/Finaliza/<string:Ncomanda>', methods = ['GET'])
 def FinalizaComanda(Ncomanda):
+    #delete from `comandasAbertas` where `nomePessoa` =
+    
+    Comandas = []
 
     now = datetime.today()
     today = now.strftime("%d/%m/%Y")
@@ -261,6 +264,26 @@ def FinalizaComanda(Ncomanda):
     cursor2 = banco.cursor()
     cursor2.execute("select `idComanda`, `nomePessoa` as 'Nome', sum(`preco`) as 'Preço final' from `comandaFinalizada` inner join `cardapio` on `comandaFinalizada`.`idProduto` = `cardapio`.`idProduto` group by `idComanda`;")
     Linhas2 = cursor2.fetchall()
+
+    cursor3 = banco.cursor()
+    cursor3.execute("select * from comandaAberta;")
+    Linhas3 = cursor3.fetchall()
+    cursor4 = banco.cursor()
+    cursor4.execute("select `idComanda`, `nomePessoa` as 'Nome', sum(`preco` * `qtdProduto`) as 'Preço final' from `comandaAberta` inner join `cardapio` on `comandaAberta`.`idProduto` = `cardapio`.`idProduto` group by `idComanda`;")
+    Linhas4 = cursor4.fetchall()
+    print(Linhas4)
+    for linha2 in Linhas4:
+        if str(linha2[1]) == Ncomanda:
+            idBusca = linha2[0]
+        itens = []
+        data = ""
+        for linha1 in Linhas3:
+            if linha1[0] == linha2[0]:
+                for linha in linhas:
+                    if linha[0] == linha1[1]:
+                        itens.append({"Nome": linha[1], "Quantidade": linha1[4], "Preco": linha[2], "Nome Imagem": linha[5], "Observacoes": linha1[2]})
+
+        Comandas.append({"Nome":linha2[1], "Itens": itens, "Total": linha2[2]})
 
     if Linhas2 == []:
         id = 1
@@ -287,6 +310,7 @@ def FinalizaComanda(Ncomanda):
 
     bd = banco.cursor()
     bd.execute("insert into `comandaFinalizada` (`idComanda`, `idProduto`, `nomePessoa`, `qtdProduto`, `data`) values " + ComandaParaFinalizar)
+    bd.execute("delete from `comandaAberta` where idComanda = " + str(idBusca))
     banco.commit()
     
     Comandas.remove(indice_pessoas_por_nome[nome_procurado])
