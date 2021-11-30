@@ -363,18 +363,23 @@ def AddNaComanda(ID):
 
     return jsonify()
 
-@app.route('/RemoveDaComanda/<string:ID>/<string:Item>/<string:Preco>', methods = ['GET'])
-def RemoveDaComanda(ID,Item,Preco):
+@app.route('/RemoveDaComanda/<string:ID>', methods = ['POST'])
+def RemoveDaComanda(ID):
     banco = mysql.connector.connect(host = 'us-cdbr-east-04.cleardb.com', database = 'heroku_b200452de328eaa', user = 'b29ac0776cb380', password = '68cf88e1')
+    data = request.get_json()
 
-    for linha in linhas:
-        if float(Preco) == float(linha[2]) and str(Item) == str(linha[1]):
-            idItem = linha[0]
+    #for linha in linhas:
+    #    if float(Preco) == float(linha[2]) and str(Item) == str(linha[1]):
+    #        idItem = linha[0]
 
-    bd = banco.cursor()
-    bd.execute("delete from `comandaAberta` where idComanda = " + ID + " and idProduto = " + str(idItem))
-    banco.commit()
-    
+    for item in data["Itens"]:
+        for linha in linhas:
+            if float(item["Preco"]) == float(linha[2]) and item["Nome"] == linha[1]:
+                idItem = linha[0]
+                bd = banco.cursor()
+                bd.execute("delete from `comandaAberta` where idComanda = " + ID + " and idProduto = " + str(idItem))
+                banco.commit()
+
     banco.close()
 
     return jsonify()
@@ -390,6 +395,8 @@ def EditaItem(ID):
                 idItem = linha[0]
                 bd = banco.cursor()
                 bd.execute("UPDATE `comandaAberta` SET `qtdProduto`= " + str(item["Quantidade"]) + " where `idProduto` = "+ str(idItem) + " and `idComanda` = " + ID)
+                banco.commit()
+                bd.execute("UPDATE `comandaAberta` SET `obs`= '" + item["Observacoes"] + "' where `idProduto` = "+ str(idItem) + " and `idComanda` = " + ID)
                 banco.commit()
                 
     banco.close()
